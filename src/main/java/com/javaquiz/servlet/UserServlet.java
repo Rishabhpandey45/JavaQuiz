@@ -1,0 +1,3 @@
+package com.javaquiz.servlet;
+import com.javaquiz.dao.UserDAO; import com.javaquiz.model.User; import jakarta.servlet.annotation.WebServlet; import jakarta.servlet.http.*; import java.io.*;
+@WebServlet("/api/users") public class UserServlet extends HttpServlet { protected void doPost(HttpServletRequest req,HttpServletResponse res)throws IOException{try{User u=new User(req.getParameter("name"),req.getParameter("college"),Integer.parseInt(req.getParameter("age")),req.getParameter("branch"));u=new UserDAO().create(u);res.setContentType("application/json");res.getWriter().print("{\"userId\":"+u.getId()+"}");}catch(Exception e){res.sendError(400,"Unable to create user: "+e.getMessage());}}}

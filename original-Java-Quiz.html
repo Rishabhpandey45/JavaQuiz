@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Java Quiz</title>
+<style>
+:root{--bg:#eef2f7;--card:#fff;--text:#1c2733;--muted:#64748b;--line:#c5ced8;--pri:#2563eb;--sel:#dbeafe;--ok:#16a34a;--bad:#dc2626;--badbg:#fef2f2;--stat:#f1f5f9;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--line:#475569;--pri:#3b82f6;--sel:#1e3a8a;--badbg:#3b1d1d;--stat:#334155}}
+:root[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--line:#475569;--pri:#3b82f6;--sel:#1e3a8a;--badbg:#3b1d1d;--stat:#334155}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:16px}
+.card{max-width:640px;margin:20px auto;background:var(--card);border-radius:14px;padding:24px;box-shadow:0 4px 18px #0002}
+h1,h2{margin-top:0}p.sub{color:var(--muted)}
+label.f{display:block;margin:12px 0 4px;font-weight:600}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:1rem;background:var(--card);color:var(--text)}
+button{padding:10px 18px;border:0;border-radius:8px;background:var(--pri);color:#fff;font-size:1rem;cursor:pointer;margin-top:16px}
+button.alt{background:var(--muted)}button.go{background:var(--ok)}button:disabled{opacity:.4;cursor:default}
+.opt{display:block;padding:11px 12px;margin:8px 0;border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.opt.sel{background:var(--sel);border-color:var(--pri)}
+.top{display:flex;justify-content:space-between;font-weight:600}
+#timer.low{color:var(--bad)}
+.bar{height:6px;background:var(--line);border-radius:3px;margin:10px 0 18px}
+.bar div{height:100%;background:var(--pri);border-radius:3px;transition:width 1s linear}
+.stats{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap}
+.stat{flex:1;min-width:80px;text-align:center;padding:12px;border-radius:10px;background:var(--stat)}
+.stat b{display:block;font-size:1.6rem}.g b{color:var(--ok)}.r b{color:var(--bad)}
+.rev{border-left:4px solid var(--bad);background:var(--badbg);padding:10px 12px;margin:10px 0;border-radius:6px}
+.hide{display:none}#err{color:var(--bad)}
+</style></head><body>
+
+<div class="card" id="s1">
+  <h1>☕ Java Quiz</h1>
+  <p class="sub">Fill in your details, pick a topic and start. Each question gives you 30 seconds.</p>
+  <label class="f" for="name">Name</label><input id="name" autocomplete="name">
+  <label class="f" for="college">College</label><input id="college">
+  <label class="f" for="age">Age</label><input id="age" type="number" min="10" max="99">
+  <label class="f" for="branch">Branch</label><input id="branch" placeholder="e.g. CSE">
+  <label class="f" for="type">Question type</label><select id="type"></select>
+  <button id="start">Start Quiz</button>
+  <p id="err"></p>
+</div>
+
+<div class="card hide" id="s2">
+  <div class="top"><span id="prog"></span><span id="timer"></span></div>
+  <div class="bar"><div id="fill"></div></div>
+  <h2 id="qtext"></h2><div id="opts"></div>
+  <button class="alt" id="prev">Previous</button>
+  <button id="next">Next</button>
+  <button id="submit" class="go hide">Submit</button>
+</div>
+
+<div class="card hide" id="s3">
+  <h1 id="who"></h1>
+  <div class="stats">
+    <div class="stat"><b id="score"></b>Score</div>
+    <div class="stat g"><b id="right"></b>Right</div>
+    <div class="stat r"><b id="wrong"></b>Wrong</div>
+    <div class="stat"><b id="skip"></b>Skipped</div>
+  </div>
+  <div id="review"></div>
+  <button id="again">Try again</button>
+</div>
+
+<script>
+const BANK = {
+ "Java Basics":[
+  ["How many bits does an int occupy in Java?",["16","32","64","8"],1,"int is always 32-bit in Java, on every platform."],
+  ["Which of these is NOT a primitive type?",["int","boolean","String","char"],2,"String is a class (a reference type)."],
+  ["Default value of a boolean instance variable?",["true","false","null","0"],1,"Instance booleans default to false."],
+  ["Correct signature of the main method?",["public static void main(String[] args)","public void main(String[] args)","static int main(String[] args)","public static main(String args)"],0,"The JVM looks for public static void main(String[] args)."],
+  ["What does 10 / 4 evaluate to with ints?",["2.5","3","2","2.0"],2,"Integer division drops the decimal part, giving 2."],
+  ["Which keyword declares a constant variable?",["const","static","final","fixed"],2,"final makes a variable assignable only once."],
+  ["Default value of an int instance variable?",["null","0","1","Undefined"],1,"Numeric instance fields default to 0."],
+  ["Which is a valid variable name?",["_count","2count","my-var","class"],0,"Names can start with a letter, _ or $, not a digit, hyphen or keyword."],
+  ["How many bits is a long?",["16","32","64","128"],2,"long is a 64-bit signed integer."],
+  ["Java source code is compiled into:",["Machine code","Bytecode","Assembly","Binary files"],1,"javac produces bytecode, which the JVM runs."],
+  ["Which loop always runs its body at least once?",["for","while","do-while","for-each"],2,"do-while checks its condition after the body."],
+  ["What is the result of 5 + \"5\" in Java?",["10","\"55\"","Error","\"10\""],1,"+ with a String concatenates, giving \"55\"."],
+  ["What does the break statement do?",["Skips one iteration","Exits the nearest loop or switch","Stops the program","Restarts the loop"],1,"break leaves the closest enclosing loop or switch."],
+  ["Which package is imported automatically?",["java.util","java.io","java.lang","java.net"],2,"java.lang (String, Math, etc.) is imported by default."],
+  ["Array indexing in Java starts at:",["0","1","-1","Any number"],0,"The first element is at index 0."],
+  ["What is 7 % 3?",["2","1","0","3"],1,"7 divided by 3 leaves remainder 1."],
+  ["Which is a wrapper class?",["int","Integer","number","Num"],1,"Integer wraps the primitive int."],
+  ["Which keyword creates a new object?",["create","malloc","new","alloc"],2,"new allocates an object and calls its constructor."],
+  ["Which operator checks equality of primitives?",["=","==","equals","==="],1,"== compares primitive values; = is assignment."],
+  ["The char type stores:",["8-bit ASCII only","16-bit Unicode character","32-bit number","A String"],1,"Java char is a 16-bit Unicode unit."]],
+ "OOP":[
+  ["Which keyword is used to inherit a class?",["implements","extends","inherits","super"],1,"A subclass uses 'extends' to inherit from a class."],
+  ["Method overloading is an example of:",["Compile-time polymorphism","Runtime polymorphism","Encapsulation","Abstraction"],0,"Overloading is resolved at compile time."],
+  ["Can an abstract class be instantiated directly?",["Yes","No","Only with new[]","Only inside main"],1,"Abstract classes cannot be instantiated; only subclasses can."],
+  ["Which keyword prevents a method from being overridden?",["static","private","final","abstract"],2,"A final method cannot be overridden."],
+  ["How many interfaces can a class implement?",["Only one","Two","Three","Any number"],3,"Java allows implementing any number of interfaces."],
+  ["A constructor's name must be:",["init","The same as the class name","new","Anything"],1,"Constructors share the class name and have no return type."],
+  ["Which access modifier is the most restrictive?",["public","protected","default","private"],3,"private limits access to the same class."],
+  ["The super keyword refers to:",["The current object","The parent class","A static member","The main class"],1,"super accesses the parent class's members and constructor."],
+  ["Hiding fields with private and exposing getters/setters is:",["Inheritance","Encapsulation","Polymorphism","Overloading"],1,"That is encapsulation (data hiding)."],
+  ["Method overriding is an example of:",["Compile-time polymorphism","Runtime polymorphism","Overloading","Encapsulation"],1,"Overridden methods are chosen at runtime."],
+  ["Interface methods (without default/static) are implicitly:",["private final","public abstract","protected","static"],1,"They are public and abstract by default."],
+  ["Does Java support multiple inheritance of classes?",["Yes","No","Only for abstract classes","Only with final"],1,"A class can extend only one class (use interfaces instead)."],
+  ["The this keyword refers to:",["The parent object","The current object","The class loader","The main method"],1,"this is a reference to the current instance."],
+  ["Which class is the superclass of all Java classes?",["Class","Main","Object","Base"],2,"Every class implicitly extends java.lang.Object."],
+  ["A static method belongs to:",["An object","The class","The JVM","An interface only"],1,"Static members belong to the class, not to instances."],
+  ["Can constructors be inherited?",["Yes","No","Only if public","Only if abstract"],1,"Constructors are not inherited, but can be called with super()."],
+  ["An abstract method:",["Has a body","Has no body","Must be static","Must be final"],1,"Abstract methods only declare a signature."],
+  ["Which keyword is used to implement an interface?",["extends","implements","inherits","uses"],1,"A class uses 'implements' for interfaces."],
+  ["A final class cannot be:",["Instantiated","Extended","Imported","Printed"],1,"final classes (like String) cannot have subclasses."],
+  ["Objects in Java are stored in the:",["Stack","Heap","Register","Method area only"],1,"Objects live on the heap; references live on the stack."]],
+ "Collections":[
+  ["Which collection does NOT allow duplicate elements?",["List","ArrayList","Set","Vector"],2,"A Set holds unique elements."],
+  ["How many null keys can a HashMap hold?",["None","One","Two","Unlimited"],1,"HashMap permits exactly one null key."],
+  ["Time complexity of ArrayList.get(index)?",["O(1)","O(n)","O(log n)","O(n^2)"],0,"ArrayList is array-backed, so access is O(1)."],
+  ["Which Map keeps insertion order?",["HashMap","TreeMap","Hashtable","LinkedHashMap"],3,"LinkedHashMap preserves insertion order."],
+  ["Which structure follows FIFO ordering?",["Stack","Queue","TreeSet","HashSet"],1,"A Queue is First-In-First-Out."],
+  ["Which legacy class is synchronized (thread-safe)?",["ArrayList","Vector","LinkedList","HashSet"],1,"Vector's methods are synchronized."],
+  ["TreeSet stores its elements:",["In insertion order","In sorted order","Randomly","By hash only"],1,"TreeSet keeps elements sorted."],
+  ["Which interface does NOT extend Collection?",["List","Set","Queue","Map"],3,"Map is a separate hierarchy."],
+  ["Which method adds an element to the end of a List?",["push()","add()","insertLast()","append()"],1,"List.add(e) appends to the end."],
+  ["HashSet internally uses a:",["TreeMap","HashMap","LinkedList","Array only"],1,"HashSet is backed by a HashMap."],
+  ["Which Iterator method checks if more elements exist?",["next()","hasNext()","more()","isEmpty()"],1,"hasNext() returns true if iteration has more elements."],
+  ["Which Stack method removes the top element?",["remove()","pop()","poll()","delete()"],1,"pop() removes and returns the top element."],
+  ["PriorityQueue orders elements by:",["Insertion order","Natural order (smallest first)","Random order","Largest first"],1,"By default it is a min-heap on natural ordering."],
+  ["Putting a duplicate key into a HashMap:",["Throws an error","Replaces the old value","Is ignored","Stores both"],1,"The new value replaces the previous one."],
+  ["Collections.sort() works on a:",["Set","Map","List","Array only"],2,"It sorts List implementations."],
+  ["ArrayList is internally a:",["Linked list","Dynamic (resizable) array","Tree","Hash table"],1,"It wraps an array that grows when needed."],
+  ["Inserting at the front of a LinkedList is:",["O(n)","O(1)","O(log n)","O(n^2)"],1,"Only head pointers change, so it is O(1)."],
+  ["TreeMap sorts entries by:",["Value","Key","Insertion time","Hash code"],1,"TreeMap keeps keys in sorted order."],
+  ["Which class implements the Deque interface?",["ArrayDeque","TreeSet","HashMap","Vector"],0,"ArrayDeque is a resizable double-ended queue."],
+  ["Correct syntax for a list of Strings?",["List<String>","List(String)","List[String]","String<List>"],0,"Generics use angle brackets: List<String>."]],
+ "Exceptions & Strings":[
+  ["Which of these is a checked exception?",["NullPointerException","ArithmeticException","IOException","ArrayIndexOutOfBoundsException"],2,"IOException must be caught or declared."],
+  ["When does a finally block NOT run?",["After return","After a thrown exception","After a catch block","After System.exit()"],3,"System.exit() (or a JVM crash) stops it from running."],
+  ["What does \"abc\".equals(\"ABC\") return?",["true","false","null","Compile error"],1,"equals is case-sensitive, so the result is false."],
+  ["Which class represents a mutable string?",["StringBuilder","String","CharSequence","Character"],0,"StringBuilder can be modified in place; String cannot."],
+  ["What does \"Hello\".substring(1, 3) return?",["\"He\"","\"ell\"","\"el\"","\"llo\""],2,"Index 1 (inclusive) to 3 (exclusive) gives \"el\"."],
+  ["Which keyword manually throws an exception?",["throws","throw","raise","catch"],1,"throw is used inside code; throws is in the method signature."],
+  ["Which keyword declares exceptions in a method signature?",["throw","throws","try","final"],1,"A method declares checked exceptions with throws."],
+  ["Which is an unchecked exception?",["IOException","SQLException","RuntimeException","Exception"],2,"RuntimeException and its subclasses are unchecked."],
+  ["String literals are stored in the:",["Stack","String pool","Register","Native memory"],1,"The string constant pool reuses identical literals."],
+  ["What does \"Java\".length() return?",["3","4","5","Error"],1,"The string has 4 characters."],
+  ["What does \"hello\".toUpperCase() return?",["hello","Hello","HELLO","hELLO"],2,"All characters become uppercase."],
+  ["What is new String(\"a\") == new String(\"a\")?",["true","false","Error","null"],1,"== compares references, and these are two objects."],
+  ["In multiple catch blocks, which should come first?",["The most general","The most specific","Any order","Exception"],1,"Specific exceptions must come before general ones."],
+  ["try-with-resources requires the resource to implement:",["Runnable","Serializable","AutoCloseable","Comparable"],2,"Resources must implement AutoCloseable."],
+  ["What does String.valueOf(10) return?",["10 (int)","\"10\"","null","Error"],1,"It converts the value to its String form."],
+  ["The superclass of all exceptions and errors is:",["Exception","Error","Throwable","Object only"],2,"Throwable is the root of the hierarchy."],
+  ["What commonly causes StackOverflowError?",["Infinite recursion","Null reference","Missing file","Bad cast"],0,"Endless recursion exhausts the call stack."],
+  ["What is \"a,b,c\".split(\",\").length?",["2","3","4","1"],1,"The split gives [a, b, c]."],
+  ["What does trim() do?",["Removes all spaces","Removes leading and trailing whitespace","Lowercases text","Reverses text"],1,"It strips whitespace from both ends only."],
+  ["Which index does charAt use for the first character?",["1","0","-1","Depends"],1,"String indexes start at 0."]]
+};
+const PER_Q = 30;
+const $ = id => document.getElementById(id);
+let qs = [], ans = [], cur = 0, left = 0, total = 0, tick = null, done = false, info = {};
+
+Object.keys(BANK).forEach(k => {
+  const o = document.createElement('option'); o.value = k;
+  o.textContent = k + ' (' + BANK[k].length + ' questions)'; $('type').appendChild(o);
+});
+
+const MIXED = "Mixed: random 20 from all topics";
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+{ const o = document.createElement('option'); o.value = MIXED; o.textContent = MIXED; $('type').appendChild(o); }
+
+$('start').onclick = () => {
+  info = {name:$('name').value.trim(), college:$('college').value.trim(), age:$('age').value.trim(),
+          branch:$('branch').value.trim(), type:$('type').value};
+  if (!info.name || !info.college || !info.age || !info.branch) { $('err').textContent = 'Please fill in all details.'; return; }
+  qs = info.type === MIXED ? shuffle(Object.values(BANK).flat()).slice(0, 20) : BANK[info.type]; ans = qs.map(() => -1); cur = 0; done = false;
+  total = left = qs.length * PER_Q;
+  $('s1').classList.add('hide'); $('s2').classList.remove('hide');
+  show(); draw();
+  tick = setInterval(() => { left--; draw(); if (left <= 0) finish(); }, 1000);
+};
+
+function draw() {
+  const m = Math.floor(left / 60), s = left % 60;
+  $('timer').textContent = '⏱ ' + m + ':' + String(s).padStart(2, '0');
+  $('timer').className = left <= 30 ? 'low' : '';
+  $('fill').style.width = (left / total * 100) + '%';
+}
+function show() {
+  $('prog').textContent = 'Question ' + (cur + 1) + ' of ' + qs.length;
+  $('qtext').textContent = qs[cur][0]; $('opts').innerHTML = '';
+  qs[cur][1].forEach((t, i) => {
+    const l = document.createElement('label'); l.className = 'opt' + (ans[cur] === i ? ' sel' : '');
+    l.textContent = t; l.onclick = () => { ans[cur] = i; show(); }; $('opts').appendChild(l);
+  });
+  $('prev').disabled = cur === 0;
+  $('next').classList.toggle('hide', cur === qs.length - 1);
+  $('submit').classList.toggle('hide', cur !== qs.length - 1);
+}
+$('prev').onclick = () => { cur--; show(); };
+$('next').onclick = () => { cur++; show(); };
+$('submit').onclick = () => {
+  const un = ans.filter(a => a < 0).length;
+  if (!un || confirm(un + ' question(s) unanswered. Submit anyway?')) finish();
+};
+$('again').onclick = () => {
+  $('s3').classList.add('hide'); $('review').innerHTML = ''; $('s1').classList.remove('hide'); $('err').textContent = '';
+};
+
+function finish() {
+  if (done) return; done = true; clearInterval(tick);
+  let right = 0, wrong = 0, skip = 0; const bad = [];
+  qs.forEach((q, i) => {
+    if (ans[i] === q[2]) right++;
+    else { if (ans[i] < 0) skip++; else wrong++; bad.push([q, ans[i]]); }
+  });
+  $('s2').classList.add('hide'); $('s3').classList.remove('hide');
+  $('who').textContent = 'Result for ' + info.name + ' (' + info.type + ')';
+  $('score').textContent = right + '/' + qs.length; $('right').textContent = right;
+  $('wrong').textContent = wrong; $('skip').textContent = skip;
+  const rv = $('review');
+  if (!bad.length) { rv.textContent = 'Perfect score! 🎉'; return; }
+  const h = document.createElement('h2'); h.textContent = 'Review of incorrect answers'; rv.appendChild(h);
+  bad.forEach(([q, pick]) => {
+    const d = document.createElement('div'); d.className = 'rev';
+    [['Q: ', q[0]], ['Your answer: ', pick < 0 ? 'Not answered' : q[1][pick]],
+     ['Correct answer: ', q[1][q[2]]], ['Why: ', q[3]]].forEach(([k, v]) => {
+      const p = document.createElement('div'), b = document.createElement('b');
+      b.textContent = k; p.appendChild(b); p.appendChild(document.createTextNode(v)); d.appendChild(p);
+    });
+    rv.appendChild(d);
+  });
+}
+</script></body></html>

@@ -1,0 +1,3 @@
+package com.javaquiz.dao;
+import com.javaquiz.util.DBConnection; import java.sql.*; import com.javaquiz.dao.api.AttemptRepository;
+public class AttemptDAO implements AttemptRepository { public void save(int userId,Integer topicId,int score,int total,int correct,int wrong,int skipped)throws SQLException{String sql="INSERT INTO attempts(user_id,topic_id,score,total,correct_count,wrong_count,skipped_count) VALUES(?,?,?,?,?,?,?)";try(Connection c=DBConnection.getConnection();PreparedStatement p=c.prepareStatement(sql)){p.setInt(1,userId);if(topicId==null)p.setNull(2,Types.INTEGER);else p.setInt(2,topicId);p.setInt(3,score);p.setInt(4,total);p.setInt(5,correct);p.setInt(6,wrong);p.setInt(7,skipped);p.executeUpdate();}}}

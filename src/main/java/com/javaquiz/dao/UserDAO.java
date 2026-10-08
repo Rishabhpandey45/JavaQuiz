@@ -1,0 +1,3 @@
+package com.javaquiz.dao;
+import com.javaquiz.model.User; import com.javaquiz.util.DBConnection; import java.sql.*; import com.javaquiz.dao.api.UserRepository;
+public class UserDAO implements UserRepository { public User create(User u) throws SQLException {String sql="INSERT INTO users(name,college,age,branch) VALUES(?,?,?,?)"; try(Connection c=DBConnection.getConnection();PreparedStatement p=c.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS)){p.setString(1,u.getName());p.setString(2,u.getCollege());p.setInt(3,u.getAge());p.setString(4,u.getBranch());p.executeUpdate();try(ResultSet r=p.getGeneratedKeys()){if(r.next())u.setId(r.getInt(1));}return u;}}}
